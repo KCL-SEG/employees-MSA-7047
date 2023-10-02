@@ -44,7 +44,10 @@ class Commission:
         return self.commission_count * self.commission_rate
 
     def __str__(self):
-        return f"and receives a commission for {self.commission_count} contract(s) at {self.commission_rate}/contract"
+        if self.commission_count == 1:
+            return f"and receives a bonus commission of {self.commission_rate}"
+        else:
+            return f"and receives a commission for {self.commission_count} contract(s) at {self.commission_rate}/contract"
 
 
 # Billie works on a monthly salary of 4000. Their total pay is 4000.
