@@ -1,88 +1,95 @@
+from abc import ABC, abstractmethod
+
 class Employee:
     def __init__(self, name):
         self.name = name
-        self.pay_components = []
 
     def get_pay(self):
-        total_pay = sum(component.calculate() for component in self.pay_components)
+        pass
+
+    def __str__(self):
+        return self.name
+
+class MonthlyEmployee(Employee):
+    def __init__(self, name, monthly_salary, commission=None):
+        super().__init__(name)
+        self.monthly_salary = monthly_salary
+        self.commission = commission
+
+    def get_pay(self):
+        total_pay = self.monthly_salary
+        if self.commission:
+            total_pay += self.commission.get_pay()
         return total_pay
 
     def __str__(self):
-        components_info = " and ".join([str(component) for component in self.pay_components])
-        return f"{self.name} works {components_info}. Their total pay is {self.get_pay()}."
+        commission_info = self.commission.get_string() if self.commission else ""
+        return f"{self.name} works on a monthly salary of {self.monthly_salary}{commission_info}. Their total pay is {self.get_pay()}."
 
-
-class MonthlySalary:
-    def __init__(self, salary):
-        self.salary = salary
-
-    def calculate(self):
-        return self.salary
-
-    def __str__(self):
-        return f"on a monthly salary of {self.salary}"
-
-
-class HourlyContract:
-    def __init__(self, hours_worked, hourly_rate):
+class HourlyEmployee(Employee):
+    def __init__(self, name, hourly_pay, hours_worked, commission=None):
+        super().__init__(name)
+        self.hourly_pay = hourly_pay
         self.hours_worked = hours_worked
-        self.hourly_rate = hourly_rate
-        
-    def calculate(self):
-        return self.hours_worked * self.hourly_rate
+        self.commission = commission
+
+    def get_pay(self):
+        total_pay = self.hourly_pay * self.hours_worked
+        if self.commission:
+            total_pay += self.commission.get_pay()
+        return total_pay
 
     def __str__(self):
-        return f"on a contract of {self.hours_worked} hours at {self.hourly_rate}/hour"
+        commission_info = self.commission.get_string() if self.commission else ""
+        return f"{self.name} works on a contract of {self.hours_worked} hours at {self.hourly_pay}/hour{commission_info}. Their total pay is {self.get_pay()}."
 
+class Commission(ABC):
+    @abstractmethod
+    def get_string(self):
+        pass
 
-class Commission:
-    def __init__(self, commission_count, commission_rate):
-        self.commission_count = commission_count
-        self.commission_rate = commission_rate
+    @abstractmethod
+    def get_pay(self):
+        pass
 
-    def calculate(self):
-        return self.commission_count * self.commission_rate
+class BonusCommission(Commission):
+    def __init__(self, commission_pay):
+        super().__init__()
+        self.commission_pay = commission_pay
 
-    def __str__(self):
-        if self.commission_count == 1:
-            return f"and receives a bonus commission of {self.commission_rate}"
-        else:
-            return f"and receives a commission for {self.commission_count} contract(s) at {self.commission_rate}/contract"
+    def get_string(self):
+        return f" and receives a bonus commission of {self.commission_pay}"
 
+    def get_pay(self):
+        return self.commission_pay
 
-# Billie works on a monthly salary of 4000. Their total pay is 4000.
-billie = Employee('Billie')
-billie.pay_components.append(MonthlySalary(4000))
+class ContractCommission(Commission):
+    def __init__(self, commission_pay, commission_number):
+        super().__init__()
+        self.commission_pay = commission_pay
+        self.commission_number = commission_number
 
-# Charlie works on a contract of 100 hours at 25/hour. Their total pay is 2500.
-charlie = Employee('Charlie')
-charlie.pay_components.append(HourlyContract(100, 25))
+    def get_string(self):
+        return f" and receives a commission for {self.commission_number} contract(s) at {self.commission_pay}/contract"
 
-# Renee works on a monthly salary of 3000 and receives a commission for 4 contract(s) at 200/contract. Their total pay is 3800.
-renee = Employee('Renee')
-renee.pay_components.append(MonthlySalary(3000))
-renee.pay_components.append(Commission(4, 200))
+    def get_pay(self):
+        return self.commission_pay * self.commission_number
 
-# Jan works on a contract of 150 hours at 25/hour and receives a commission for 3 contract(s) at 220/contract. Their total pay is 4410.
-jan = Employee('Jan')
-jan.pay_components.append(HourlyContract(150, 25))
-jan.pay_components.append(Commission(3, 220))
+# Examples
+billie = MonthlyEmployee('Billie', 4000)
+print(str(billie))
 
-# Robbie works on a monthly salary of 2000 and receives a bonus commission of 1500. Their total pay is 3500.
-robbie = Employee('Robbie')
-robbie.pay_components.append(MonthlySalary(2000))
-robbie.pay_components.append(Commission(1, 1500))
-
-# Ariel works on a contract of 120 hours at 30/hour and receives a bonus commission of 600. Their total pay is 4200.
-ariel = Employee('Ariel')
-ariel.pay_components.append(HourlyContract(120, 30))
-ariel.pay_components.append(Commission(1, 600))
-
-# Test cases
-print(str(billie))  # Output should match the specified format
+charlie = HourlyEmployee('Charlie', 25, 100)
 print(str(charlie))
-print(str(renee))
-print(str(jan))
-print(str(robbie))
-print(str(ariel))
 
+renee = MonthlyEmployee('Renee', 3000, ContractCommission(200, 4))
+print(str(renee))
+
+jan = HourlyEmployee('Jan', 25, 150, ContractCommission(220, 3))
+print(str(jan))
+
+robbie = MonthlyEmployee('Robbie', 2000, BonusCommission(1500))
+print(str(robbie))
+
+ariel = HourlyEmployee('Ariel', 30, 120, BonusCommission(600))
+print(str(ariel))
